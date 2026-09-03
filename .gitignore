@@ -1,0 +1,42 @@
+# ============== 依赖目录 ==============
+node_modules/
+
+# ============== 本地缓存（避免上传几百MB的二进制缓存） ==============
+.npm-cache/
+.electron-cache/
+.electron-builder-cache/
+
+# ============== 打包输出（构建产物，可随时重跑 npm run dist 生成） ==============
+dist/
+build-release/
+build-release-*/
+out/
+release/
+
+# ============== npm 日志 ==============
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+
+# ============== 系统文件 ==============
+.DS_Store
+Thumbs.db
+desktop.ini
+
+# ============== 编辑器 / IDE ==============
+.vscode/
+.idea/
+*.swp
+*.swo
+*~
+
+# ============== Electron 开发/临时 ==============
+*.log
+.env
+.env.local
+.env.*.local
+
+# ============== Windows 批处理 / 临时上传脚本 ==============
+*.bat.tmp
+upload-*.ps1
+upload-*.bat
