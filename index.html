@@ -7,7 +7,22 @@
   <link rel="stylesheet" href="style.css" />
 </head>
 <body>
-  <div class="app">
+  <!-- 启动加载页：检测版本 / 下载更新 -->
+  <div id="bootSplash" class="boot-splash">
+    <div class="boot-splash-inner">
+      <div class="boot-logo-dot"></div>
+      <h1 class="boot-title">今日任务</h1>
+      <p id="bootVersion" class="boot-version"></p>
+      <div class="boot-spinner" aria-hidden="true"></div>
+      <p id="bootStatus" class="boot-status">正在检查更新…</p>
+      <div id="bootProgressTrack" class="boot-progress-track" hidden>
+        <div id="bootProgressBar" class="boot-progress-bar"></div>
+      </div>
+      <p id="bootHint" class="boot-hint"></p>
+    </div>
+  </div>
+
+  <div id="appRoot" class="app" hidden>
     <!-- 顶部栏 -->
     <header class="header">
       <div class="header-left">
@@ -46,10 +61,11 @@
         </button>
       </div>
       <div class="input-hint">换行分隔多个任务 · <kbd>Enter</kbd> 添加 · <kbd>Shift</kbd>+<kbd>Enter</kbd> 换行</div>
+      <div class="tag-bar" id="tagBar" title="点击选择标签 · 长按拖动排序"></div>
     </div>
 
-    <!-- 任务列表 -->
-    <ul id="taskList" class="task-list"></ul>
+    <!-- 任务列表（按标签分组） -->
+    <div id="taskList" class="task-list"></div>
 
     <!-- 空状态 -->
     <div id="emptyState" class="empty-state">
@@ -64,7 +80,7 @@
 
     <!-- 底部提示 -->
     <footer class="footer">
-      <span class="footer-tip">任务自动保存本地 · 7 天后过期清除</span>
+      <span class="footer-tip">双击编辑 · 标签分类 · 长按拖排</span>
       <button id="clearDoneBtn" class="clear-done-btn" title="清除已完成任务">清除已完成</button>
     </footer>
   </div>

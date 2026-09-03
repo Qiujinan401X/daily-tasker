@@ -231,10 +231,104 @@ input, textarea {
   transform: translateY(0) scale(0.97);
 }
 
+/* ===== 标签栏 ===== */
+.tag-bar {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  margin-top: 10px;
+  min-height: 28px;
+  align-items: center;
+}
+
+.tag-chip {
+  appearance: none;
+  border: 1.5px solid transparent;
+  border-radius: 999px;
+  padding: 4px 12px;
+  font-size: 12px;
+  font-weight: 600;
+  font-family: inherit;
+  cursor: grab;
+  transition: transform 0.2s ease, box-shadow 0.2s ease, opacity 0.2s ease, background 0.2s ease;
+  touch-action: none;
+  line-height: 1.3;
+  position: relative;
+}
+
+.tag-chip:active {
+  cursor: grabbing;
+}
+
+.tag-chip[data-tag="work"] {
+  background: rgba(59, 130, 246, 0.12);
+  color: #2563eb;
+  border-color: rgba(59, 130, 246, 0.2);
+}
+
+.tag-chip[data-tag="life"] {
+  background: rgba(16, 185, 129, 0.12);
+  color: #059669;
+  border-color: rgba(16, 185, 129, 0.2);
+}
+
+.tag-chip[data-tag="shopping"] {
+  background: rgba(245, 158, 11, 0.12);
+  color: #d97706;
+  border-color: rgba(245, 158, 11, 0.25);
+}
+
+.tag-chip.selected {
+  box-shadow: 0 0 0 2px rgba(99, 102, 241, 0.25);
+  transform: translateY(-1px);
+}
+
+.tag-chip[data-tag="work"].selected {
+  background: #2563eb;
+  color: #fff;
+  border-color: #2563eb;
+}
+
+.tag-chip[data-tag="life"].selected {
+  background: #059669;
+  color: #fff;
+  border-color: #059669;
+}
+
+.tag-chip[data-tag="shopping"].selected {
+  background: #d97706;
+  color: #fff;
+  border-color: #d97706;
+}
+
+.tag-chip.drag-ready {
+  transform: scale(1.06);
+  box-shadow: 0 6px 16px rgba(15, 23, 42, 0.12);
+}
+
+.tag-chip.dragging {
+  opacity: 0.35;
+}
+
+.tag-chip-ghost {
+  position: fixed;
+  z-index: 1000;
+  pointer-events: none;
+  opacity: 0.95;
+  box-shadow: 0 8px 24px rgba(15, 23, 42, 0.18);
+  transform: scale(1.08);
+  margin: 0;
+}
+
+.tag-bar-hint {
+  font-size: 11px;
+  color: #94a3b8;
+  margin-left: 2px;
+}
+
 /* ===== 任务列表 ===== */
 .task-list {
   flex: 1;
-  list-style: none;
   overflow-y: auto;
   padding-right: 4px;
   margin-bottom: 12px;
@@ -255,6 +349,53 @@ input, textarea {
 
 .task-list::-webkit-scrollbar-thumb:hover {
   background: rgba(148, 163, 184, 0.5);
+}
+
+.tag-group {
+  margin-bottom: 14px;
+}
+
+.tag-group:last-child {
+  margin-bottom: 4px;
+}
+
+.tag-group-header {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 2px 2px 8px;
+  font-size: 12px;
+  font-weight: 700;
+  color: #64748b;
+  letter-spacing: 0.2px;
+}
+
+.tag-group-header .tag-dot {
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  flex-shrink: 0;
+}
+
+.tag-group[data-tag="work"] .tag-dot { background: #2563eb; }
+.tag-group[data-tag="life"] .tag-dot { background: #059669; }
+.tag-group[data-tag="shopping"] .tag-dot { background: #d97706; }
+.tag-group[data-tag=""] .tag-dot { background: #94a3b8; }
+
+.tag-group-count {
+  font-weight: 500;
+  color: #94a3b8;
+  font-size: 11px;
+}
+
+.tag-group-list {
+  list-style: none;
+}
+
+.tag-group-empty {
+  font-size: 12px;
+  color: #cbd5e1;
+  padding: 6px 4px 2px;
 }
 
 .task-item {
@@ -285,6 +426,22 @@ input, textarea {
 .task-item:hover {
   box-shadow: 0 4px 14px rgba(99, 102, 241, 0.1);
   transform: translateY(-1px);
+}
+
+.task-item.pinned {
+  background: linear-gradient(135deg, #fafafe 0%, #f5f3ff 100%);
+  box-shadow: 0 2px 8px rgba(99, 102, 241, 0.08);
+  border-left: 3px solid #6366f1;
+  padding-left: 11px;
+}
+
+.task-item.pinned:hover {
+  box-shadow: 0 4px 14px rgba(99, 102, 241, 0.14);
+}
+
+/* 标签菜单打开时抬高层级，避免被下方卡片遮挡 */
+.task-item.tag-menu-open {
+  z-index: 30;
 }
 
 /* 复选框 */
@@ -365,6 +522,37 @@ input, textarea {
   transition: color 0.3s ease;
   position: relative;
   display: inline;
+  cursor: default;
+}
+
+/* 双击内联编辑 */
+.task-item.editing {
+  box-shadow: 0 0 0 2px rgba(99, 102, 241, 0.35), 0 4px 14px rgba(99, 102, 241, 0.12);
+}
+
+.task-item.editing .strikethrough-line {
+  display: none;
+}
+
+.task-edit-input {
+  box-sizing: border-box;
+  font: inherit;
+  font-size: 14px;
+  line-height: 1.5;
+  color: #334155;
+  background: #f8fafc;
+  border: 1px solid #c7d2fe;
+  border-radius: 8px;
+  padding: 4px 8px;
+  outline: none;
+  margin: -4px -8px;
+  width: calc(100% + 16px);
+}
+
+.task-edit-input:focus {
+  border-color: #6366f1;
+  background: #fff;
+  box-shadow: 0 0 0 3px rgba(99, 102, 241, 0.15);
 }
 
 /* 删除线 - 使用 span 实现动画 */
@@ -400,6 +588,83 @@ input, textarea {
   gap: 6px;
   font-size: 11px;
   color: #94a3b8;
+  flex-wrap: wrap;
+}
+
+.task-tag-btn {
+  appearance: none;
+  border: none;
+  border-radius: 8px;
+  padding: 1px 7px;
+  font-size: 10px;
+  font-weight: 600;
+  font-family: inherit;
+  cursor: pointer;
+  line-height: 1.4;
+  transition: all 0.15s ease;
+  background: rgba(148, 163, 184, 0.12);
+  color: #64748b;
+}
+
+.task-tag-btn:hover {
+  filter: brightness(0.96);
+}
+
+.task-tag-btn[data-tag="work"] {
+  background: rgba(59, 130, 246, 0.12);
+  color: #2563eb;
+}
+
+.task-tag-btn[data-tag="life"] {
+  background: rgba(16, 185, 129, 0.12);
+  color: #059669;
+}
+
+.task-tag-btn[data-tag="shopping"] {
+  background: rgba(245, 158, 11, 0.14);
+  color: #d97706;
+}
+
+.task-tag-menu {
+  position: absolute;
+  z-index: 40;
+  top: calc(100% + 4px);
+  left: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  padding: 6px;
+  background: #fff;
+  border-radius: 10px;
+  box-shadow: 0 8px 24px rgba(15, 23, 42, 0.14);
+  border: 1px solid rgba(148, 163, 184, 0.15);
+  min-width: 88px;
+}
+
+.task-tag-menu button {
+  appearance: none;
+  border: none;
+  background: transparent;
+  text-align: left;
+  padding: 6px 8px;
+  border-radius: 7px;
+  font-size: 12px;
+  font-family: inherit;
+  cursor: pointer;
+  color: #334155;
+}
+
+.task-tag-menu button:hover {
+  background: rgba(99, 102, 241, 0.08);
+}
+
+.task-tag-menu button.active {
+  font-weight: 700;
+}
+
+.task-tag-picker {
+  position: relative;
+  display: inline-flex;
 }
 
 .task-time {
@@ -424,6 +689,43 @@ input, textarea {
 .expire-tag.expiring {
   background: rgba(239, 68, 68, 0.1);
   color: #dc2626;
+}
+
+/* 任务置顶按钮 */
+.task-pin-btn {
+  opacity: 0;
+  width: 28px;
+  height: 28px;
+  border: none;
+  border-radius: 7px;
+  background: transparent;
+  color: #94a3b8;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: all 0.2s ease;
+  flex-shrink: 0;
+  margin-top: -2px;
+}
+
+.task-item:hover .task-pin-btn,
+.task-pin-btn.active {
+  opacity: 1;
+}
+
+.task-pin-btn:hover {
+  background: rgba(99, 102, 241, 0.1);
+  color: #6366f1;
+}
+
+.task-pin-btn.active {
+  color: #6366f1;
+  background: rgba(99, 102, 241, 0.12);
+}
+
+.task-pin-btn.active:hover {
+  background: rgba(99, 102, 241, 0.2);
 }
 
 /* 删除按钮 */
@@ -543,4 +845,139 @@ input, textarea {
     padding-bottom: 0;
     margin-bottom: 0;
   }
+}
+
+/* ===== 启动加载页 ===== */
+.boot-splash {
+  position: fixed;
+  inset: 0;
+  z-index: 100;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: linear-gradient(160deg, #f6f8fc 0%, #eef2ff 50%, #f5f0ff 100%);
+}
+
+.boot-splash[hidden] {
+  display: none !important;
+}
+
+.boot-splash-inner {
+  width: min(300px, 86%);
+  text-align: center;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 10px;
+  animation: bootFadeIn 0.35s ease;
+}
+
+@keyframes bootFadeIn {
+  from {
+    opacity: 0;
+    transform: translateY(8px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+.boot-logo-dot {
+  width: 18px;
+  height: 18px;
+  border-radius: 50%;
+  background: linear-gradient(135deg, #6366f1, #a855f7);
+  box-shadow: 0 0 0 5px rgba(99, 102, 241, 0.15);
+  animation: bootPulse 1.4s ease-in-out infinite;
+}
+
+@keyframes bootPulse {
+  0%, 100% {
+    transform: scale(1);
+    box-shadow: 0 0 0 5px rgba(99, 102, 241, 0.15);
+  }
+  50% {
+    transform: scale(1.08);
+    box-shadow: 0 0 0 8px rgba(99, 102, 241, 0.1);
+  }
+}
+
+.boot-title {
+  font-size: 22px;
+  font-weight: 700;
+  background: linear-gradient(135deg, #6366f1, #a855f7);
+  -webkit-background-clip: text;
+  background-clip: text;
+  -webkit-text-fill-color: transparent;
+  letter-spacing: 0.4px;
+}
+
+.boot-version {
+  font-size: 12px;
+  color: #94a3b8;
+  margin-top: -4px;
+}
+
+.boot-spinner {
+  width: 28px;
+  height: 28px;
+  margin: 8px 0 2px;
+  border: 3px solid rgba(99, 102, 241, 0.18);
+  border-top-color: #6366f1;
+  border-radius: 50%;
+  animation: bootSpin 0.8s linear infinite;
+}
+
+.boot-splash.is-done .boot-spinner {
+  animation: none;
+  border-color: rgba(99, 102, 241, 0.25);
+  border-top-color: rgba(99, 102, 241, 0.25);
+  opacity: 0.5;
+}
+
+@keyframes bootSpin {
+  to {
+    transform: rotate(360deg);
+  }
+}
+
+.boot-status {
+  font-size: 13px;
+  color: #475569;
+  font-weight: 500;
+  line-height: 1.45;
+  min-height: 1.45em;
+}
+
+.boot-progress-track {
+  width: 100%;
+  height: 6px;
+  margin-top: 4px;
+  border-radius: 999px;
+  background: rgba(99, 102, 241, 0.12);
+  overflow: hidden;
+}
+
+.boot-progress-track[hidden] {
+  display: none !important;
+}
+
+.boot-progress-bar {
+  height: 100%;
+  width: 0%;
+  border-radius: inherit;
+  background: linear-gradient(90deg, #6366f1, #a855f7);
+  transition: width 0.2s ease;
+}
+
+.boot-hint {
+  font-size: 11px;
+  color: #94a3b8;
+  line-height: 1.4;
+  min-height: 1.4em;
+}
+
+.app[hidden] {
+  display: none !important;
 }
