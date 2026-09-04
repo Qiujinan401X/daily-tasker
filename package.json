@@ -1,6 +1,6 @@
 {
   "name": "desktop-todo-widget",
-  "version": "1.1.0",
+  "version": "1.2.4",
   "description": "桌面任务小工具 - 输入任务、自动生成列表、删除线动画、本地存储一周、窗口置顶",
   "main": "main.js",
   "repository": {

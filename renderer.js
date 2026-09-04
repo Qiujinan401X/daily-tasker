@@ -5,10 +5,13 @@
   // ---------- 常量 ----------
   const STORAGE_KEY = 'desktop_todo_tasks_v1';
   const TAG_ORDER_KEY = 'desktop_todo_tag_order_v1';
+  const SETTINGS_KEY = 'desktop_todo_settings_v1';
   const EXPIRE_DAYS = 7;
   const ONE_DAY_MS = 24 * 60 * 60 * 1000;
   const LONG_PRESS_MS = 420;
   const DRAG_MOVE_CANCEL_PX = 8;
+  /** 已完成分组占位 id（非真实 tag，不可新建/手动选择） */
+  const DONE_GROUP_ID = 'done';
 
   const TAG_DEFS = {
     work: { id: 'work', name: '工作' },
@@ -16,6 +19,10 @@
     shopping: { id: 'shopping', name: '购物' }
   };
   const DEFAULT_TAG_ORDER = ['work', 'life', 'shopping'];
+  const DEFAULT_SETTINGS = {
+    /** light | dark */
+    theme: 'light'
+  };
 
   // ---------- DOM 元素 ----------
   const taskInput = document.getElementById('taskInput');
@@ -24,6 +31,8 @@
   const emptyState = document.getElementById('emptyState');
   const taskCount = document.getElementById('taskCount');
   const pinBtn = document.getElementById('pinBtn');
+  const settingsBtn = document.getElementById('settingsBtn');
+  const settingsPanel = document.getElementById('settingsPanel');
   const dateTag = document.getElementById('dateTag');
   const clearDoneBtn = document.getElementById('clearDoneBtn');
   const tagBar = document.getElementById('tagBar');
@@ -38,6 +47,7 @@
   // ---------- 数据 ----------
   let tasks = [];
   let tagOrder = [...DEFAULT_TAG_ORDER];
+  let settings = { ...DEFAULT_SETTINGS };
   /** 新建任务时选中的标签；null 表示未分类 */
   let draftTag = null;
   let appEntered = false;
@@ -110,20 +120,28 @@
     });
   }
 
-  /** 启动时纠偏：每个分类最多一条置顶（保留 pinnedAt 最新的） */
+  /** 启动时纠偏：每个分类最多一条置顶（保留 pinnedAt 最新的）；已完成任务不允许置顶 */
   function enforceSinglePinPerCategory() {
+    let changed = false;
+    tasks.forEach((t) => {
+      if (t.completed && t.pinned) {
+        t.pinned = false;
+        t.pinnedAt = undefined;
+        changed = true;
+      }
+    });
+
     const winners = new Map();
     tasks.forEach((t) => {
-      if (!t.pinned) return;
+      if (!t.pinned || t.completed) return;
       const key = categoryKey(t.tag);
       const prev = winners.get(key);
       if (!prev || (t.pinnedAt || 0) > (prev.pinnedAt || 0)) {
         winners.set(key, t);
       }
     });
-    let changed = false;
     tasks.forEach((t) => {
-      if (!t.pinned) return;
+      if (!t.pinned || t.completed) return;
       const key = categoryKey(t.tag);
       if (winners.get(key) !== t) {
         t.pinned = false;
@@ -181,6 +199,39 @@
       localStorage.setItem(TAG_ORDER_KEY, JSON.stringify(tagOrder));
     } catch (e) {
       console.error('保存标签顺序失败', e);
+    }
+  }
+
+  function normalizeTheme(theme) {
+    return theme === 'dark' ? 'dark' : 'light';
+  }
+
+  /** 按本地时间：19:00–04:00 夜间，其余白天 */
+  function themeFromSystemTime(date) {
+    const h = (date || new Date()).getHours();
+    return h >= 19 || h < 4 ? 'dark' : 'light';
+  }
+
+  function loadSettings() {
+    try {
+      const raw = localStorage.getItem(SETTINGS_KEY);
+      if (!raw) return { ...DEFAULT_SETTINGS };
+      const obj = JSON.parse(raw);
+      if (!obj || typeof obj !== 'object') return { ...DEFAULT_SETTINGS };
+      return {
+        ...DEFAULT_SETTINGS,
+        theme: normalizeTheme(obj.theme)
+      };
+    } catch (e) {
+      return { ...DEFAULT_SETTINGS };
+    }
+  }
+
+  function saveSettings() {
+    try {
+      localStorage.setItem(SETTINGS_KEY, JSON.stringify(settings));
+    } catch (e) {
+      console.error('保存设置失败', e);
     }
   }
 
@@ -371,15 +422,21 @@
     closeAllTagMenus();
     taskList.innerHTML = '';
 
+    // 未完成任务按标签分组；已完成统一归入末尾「已完成」分组
     tagOrder.forEach((tagId) => {
-      const groupTasks = sortTasks(tasks.filter((t) => t.tag === tagId));
+      const groupTasks = sortTasks(tasks.filter((t) => !t.completed && t.tag === tagId));
       if (groupTasks.length === 0) return;
       taskList.appendChild(createTagGroup(tagId, TAG_DEFS[tagId].name, groupTasks));
     });
 
-    const untagged = sortTasks(tasks.filter((t) => !t.tag));
+    const untagged = sortTasks(tasks.filter((t) => !t.completed && !t.tag));
     if (untagged.length > 0) {
       taskList.appendChild(createTagGroup('', '未分类', untagged));
+    }
+
+    const doneTasks = sortTasks(tasks.filter((t) => t.completed));
+    if (doneTasks.length > 0) {
+      taskList.appendChild(createTagGroup(DONE_GROUP_ID, '已完成', doneTasks));
     }
 
     updateTaskCount();
@@ -443,23 +500,29 @@
           <span class="expire-tag ${expire.cls}">${expire.label}</span>
         </div>
       </div>
-      <button type="button" class="task-pin-btn${task.pinned ? ' active' : ''}" title="${task.pinned ? '取消置顶' : '置顶任务'}">
+      ${
+        task.completed
+          ? ''
+          : `<button type="button" class="task-pin-btn${task.pinned ? ' active' : ''}" title="${task.pinned ? '取消置顶' : '置顶任务'}">
         <svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
           <line x1="12" y1="17" x2="12" y2="22"></line>
           <path d="M5 17h14l-2-5V7l-5-3-5 3v5l-2 5z"></path>
         </svg>
-      </button>
+      </button>`
+      }
     `;
 
     const checkbox = li.querySelector('.task-checkbox');
     checkbox.addEventListener('change', () => toggleTask(task.id));
 
     const pinTaskBtn = li.querySelector('.task-pin-btn');
-    pinTaskBtn.addEventListener('click', (e) => {
-      e.stopPropagation();
-      togglePinTask(task.id);
-    });
-    pinTaskBtn.addEventListener('dblclick', (e) => e.stopPropagation());
+    if (pinTaskBtn) {
+      pinTaskBtn.addEventListener('click', (e) => {
+        e.stopPropagation();
+        togglePinTask(task.id);
+      });
+      pinTaskBtn.addEventListener('dblclick', (e) => e.stopPropagation());
+    }
 
     const tagBtn = li.querySelector('.task-tag-btn');
     const picker = li.querySelector('.task-tag-picker');
@@ -626,7 +689,7 @@
 
   function togglePinTask(id) {
     const task = tasks.find((t) => t.id === id);
-    if (!task) return;
+    if (!task || task.completed) return;
     task.pinned = !task.pinned;
     if (task.pinned) {
       clearOtherPinsInCategory(task.id, task.tag);
@@ -638,19 +701,50 @@
     render();
   }
 
+  /**
+   * 完成置顶任务时：取消本条置顶，并将同分类下一条未完成任务置顶。
+   * 「下一条」取完成前组内排序中紧随其后的任务。
+   */
+  function promoteNextPinAfterComplete(doneTask) {
+    const key = categoryKey(doneTask.tag);
+    const ordered = sortTasks(
+      tasks.filter((t) => !t.completed && categoryKey(t.tag) === key)
+    );
+    const idx = ordered.findIndex((t) => t.id === doneTask.id);
+    const next = idx >= 0 ? ordered[idx + 1] : null;
+
+    doneTask.pinned = false;
+    doneTask.pinnedAt = undefined;
+
+    if (next) {
+      next.pinned = true;
+      next.pinnedAt = Date.now();
+      clearOtherPinsInCategory(next.id, next.tag);
+    }
+  }
+
   function toggleTask(id) {
     const task = tasks.find((t) => t.id === id);
     if (!task) return;
-    task.completed = !task.completed;
+
+    const becomingDone = !task.completed;
+
+    if (becomingDone && task.pinned) {
+      promoteNextPinAfterComplete(task);
+    }
+
+    task.completed = becomingDone;
     saveTasks();
 
     const li = taskList.querySelector(`.task-item[data-id="${id}"]`);
-    if (li) {
+    if (li && becomingDone) {
       li.classList.remove('completed');
-      if (task.completed) {
-        void li.offsetWidth;
-        li.classList.add('completed');
-      }
+      void li.offsetWidth;
+      li.classList.add('completed');
+      // 等删除线/弹跳动画后再重排到「已完成」分组
+      setTimeout(() => render(), 420);
+    } else {
+      render();
     }
     updateTaskCount();
   }
@@ -694,6 +788,59 @@
       pinBtn.style.opacity = '0.4';
       pinBtn.title = '置顶功能需要在桌面客户端中使用';
     }
+  }
+
+  // ---------- 设置面板 / 主题 ----------
+  function applyTheme(theme) {
+    const next = normalizeTheme(theme);
+    settings.theme = next;
+    document.documentElement.setAttribute('data-theme', next);
+    if (settingsPanel) {
+      settingsPanel.querySelectorAll('.theme-tab').forEach((btn) => {
+        const active = btn.dataset.theme === next;
+        btn.classList.toggle('active', active);
+        btn.setAttribute('aria-selected', active ? 'true' : 'false');
+      });
+    }
+  }
+
+  function closeSettingsPanel() {
+    if (!settingsPanel || settingsPanel.hidden) return;
+    settingsPanel.hidden = true;
+    if (settingsBtn) {
+      settingsBtn.classList.remove('active');
+      settingsBtn.setAttribute('aria-expanded', 'false');
+    }
+  }
+
+  function toggleSettingsPanel() {
+    if (!settingsPanel || !settingsBtn) return;
+    const open = settingsPanel.hidden;
+    settingsPanel.hidden = !open;
+    settingsBtn.classList.toggle('active', open);
+    settingsBtn.setAttribute('aria-expanded', open ? 'true' : 'false');
+  }
+
+  function initSettings() {
+    // 每次打开按系统时间决定默认主题；设置里仍可手动切换（当次会话）
+    applyTheme(themeFromSystemTime());
+    saveSettings();
+    if (!settingsBtn || !settingsPanel) return;
+
+    settingsBtn.addEventListener('click', (e) => {
+      e.stopPropagation();
+      toggleSettingsPanel();
+    });
+
+    settingsPanel.querySelectorAll('.theme-tab').forEach((btn) => {
+      btn.addEventListener('click', (e) => {
+        e.stopPropagation();
+        applyTheme(btn.dataset.theme);
+        saveSettings();
+      });
+    });
+
+    settingsPanel.addEventListener('click', (e) => e.stopPropagation());
   }
 
   // ---------- 启动加载 / 自动更新 ----------
@@ -855,6 +1002,7 @@
 
     document.addEventListener('click', (e) => {
       if (!e.target.closest('.task-tag-picker')) closeAllTagMenus();
+      if (!e.target.closest('.settings-wrap')) closeSettingsPanel();
     });
   }
 
@@ -863,12 +1011,14 @@
     dateTag.textContent = todayStr();
     tasks = loadTasks();
     tagOrder = loadTagOrder();
+    settings = loadSettings();
     cleanupExpired();
     if (enforceSinglePinPerCategory()) saveTasks();
     renderTagBar();
     render();
     bindEvents();
     initPinBtn();
+    initSettings();
     runBootSequence();
 
     setInterval(() => {

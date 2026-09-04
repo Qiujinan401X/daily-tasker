@@ -125,6 +125,64 @@ input, textarea {
   box-shadow: 0 6px 16px rgba(99, 102, 241, 0.45);
 }
 
+.settings-wrap {
+  position: relative;
+}
+
+.settings-panel {
+  position: absolute;
+  top: calc(100% + 8px);
+  right: 0;
+  z-index: 40;
+  min-width: 200px;
+  padding: 12px;
+  background: #fff;
+  border: 1px solid rgba(148, 163, 184, 0.25);
+  border-radius: 10px;
+  box-shadow: 0 10px 28px rgba(15, 23, 42, 0.12);
+}
+
+.settings-section-label {
+  font-size: 11px;
+  font-weight: 600;
+  color: #94a3b8;
+  margin-bottom: 8px;
+  letter-spacing: 0.2px;
+}
+
+.theme-tabs {
+  display: flex;
+  gap: 4px;
+  padding: 3px;
+  background: rgba(148, 163, 184, 0.12);
+  border-radius: 8px;
+}
+
+.theme-tab {
+  flex: 1;
+  border: none;
+  background: transparent;
+  color: #64748b;
+  font-size: 12px;
+  font-family: inherit;
+  font-weight: 500;
+  padding: 7px 10px;
+  border-radius: 6px;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  white-space: nowrap;
+}
+
+.theme-tab:hover {
+  color: #475569;
+}
+
+.theme-tab.active {
+  background: #fff;
+  color: #4338ca;
+  box-shadow: 0 1px 4px rgba(15, 23, 42, 0.1);
+}
+
 /* ===== 输入区域 ===== */
 .input-section {
   margin-bottom: 12px;
@@ -381,6 +439,11 @@ input, textarea {
 .tag-group[data-tag="life"] .tag-dot { background: #059669; }
 .tag-group[data-tag="shopping"] .tag-dot { background: #d97706; }
 .tag-group[data-tag=""] .tag-dot { background: #94a3b8; }
+.tag-group[data-tag="done"] .tag-dot { background: #64748b; }
+
+.tag-group[data-tag="done"] .tag-group-header {
+  color: #94a3b8;
+}
 
 .tag-group-count {
   font-weight: 500;
@@ -980,4 +1043,196 @@ input, textarea {
 
 .app[hidden] {
   display: none !important;
+}
+
+/* ===== 夜间模式 ===== */
+html[data-theme="dark"] body,
+html[data-theme="dark"] .boot-splash {
+  color: #e2e8f0;
+  background: linear-gradient(160deg, #0f172a 0%, #1e1b4b 55%, #171717 100%);
+}
+
+html[data-theme="dark"] .date-tag,
+html[data-theme="dark"] .task-count {
+  background: rgba(148, 163, 184, 0.14);
+  color: #94a3b8;
+}
+
+html[data-theme="dark"] .pin-btn {
+  background: rgba(148, 163, 184, 0.12);
+  color: #94a3b8;
+}
+
+html[data-theme="dark"] .pin-btn:hover {
+  background: rgba(129, 140, 248, 0.18);
+  color: #a5b4fc;
+}
+
+html[data-theme="dark"] .settings-panel {
+  background: #1e293b;
+  border-color: rgba(148, 163, 184, 0.2);
+  box-shadow: 0 12px 32px rgba(0, 0, 0, 0.45);
+}
+
+html[data-theme="dark"] .settings-section-label {
+  color: #64748b;
+}
+
+html[data-theme="dark"] .theme-tabs {
+  background: rgba(15, 23, 42, 0.55);
+}
+
+html[data-theme="dark"] .theme-tab {
+  color: #94a3b8;
+}
+
+html[data-theme="dark"] .theme-tab:hover {
+  color: #cbd5e1;
+}
+
+html[data-theme="dark"] .theme-tab.active {
+  background: #334155;
+  color: #c7d2fe;
+  box-shadow: 0 1px 4px rgba(0, 0, 0, 0.25);
+}
+
+html[data-theme="dark"] .input-wrapper {
+  background: #1e293b;
+  border-color: rgba(129, 140, 248, 0.22);
+  box-shadow: 0 2px 10px rgba(0, 0, 0, 0.25);
+}
+
+html[data-theme="dark"] .input-wrapper:focus-within {
+  border-color: rgba(129, 140, 248, 0.5);
+  box-shadow: 0 4px 18px rgba(99, 102, 241, 0.2);
+}
+
+html[data-theme="dark"] .task-input {
+  color: #e2e8f0;
+}
+
+html[data-theme="dark"] .task-input::placeholder {
+  color: #64748b;
+}
+
+html[data-theme="dark"] .input-hint,
+html[data-theme="dark"] .tag-bar-hint,
+html[data-theme="dark"] .footer-tip,
+html[data-theme="dark"] .empty-state,
+html[data-theme="dark"] .task-meta,
+html[data-theme="dark"] .task-time,
+html[data-theme="dark"] .tag-group-header,
+html[data-theme="dark"] .tag-group-count,
+html[data-theme="dark"] .boot-version,
+html[data-theme="dark"] .boot-hint {
+  color: #64748b;
+}
+
+html[data-theme="dark"] .input-hint kbd {
+  background: rgba(148, 163, 184, 0.16);
+  color: #94a3b8;
+}
+
+html[data-theme="dark"] .task-list::-webkit-scrollbar-thumb {
+  background: rgba(148, 163, 184, 0.28);
+}
+
+html[data-theme="dark"] .task-item {
+  background: #1e293b;
+  box-shadow: 0 2px 10px rgba(0, 0, 0, 0.22);
+  border-color: transparent;
+}
+
+html[data-theme="dark"] .task-item:hover {
+  box-shadow: 0 4px 16px rgba(0, 0, 0, 0.35);
+}
+
+html[data-theme="dark"] .task-item.pinned {
+  background: linear-gradient(135deg, #1e293b 0%, #312e81 100%);
+  border: 1px solid rgba(129, 140, 248, 0.28);
+}
+
+html[data-theme="dark"] .task-text {
+  color: #e2e8f0;
+}
+
+html[data-theme="dark"] .task-item.completed .task-text {
+  color: #64748b;
+}
+
+html[data-theme="dark"] .task-edit-input {
+  background: #0f172a;
+  color: #e2e8f0;
+  border-color: rgba(129, 140, 248, 0.35);
+}
+
+html[data-theme="dark"] .task-tag-btn {
+  background: rgba(148, 163, 184, 0.14);
+  color: #94a3b8;
+}
+
+html[data-theme="dark"] .task-tag-menu {
+  background: #0f172a;
+  border-color: rgba(148, 163, 184, 0.2);
+  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.4);
+}
+
+html[data-theme="dark"] .task-tag-menu button {
+  color: #cbd5e1;
+}
+
+html[data-theme="dark"] .task-tag-menu button:hover {
+  background: rgba(129, 140, 248, 0.15);
+}
+
+html[data-theme="dark"] .task-tag-menu button.active {
+  background: rgba(99, 102, 241, 0.25);
+  color: #c7d2fe;
+}
+
+html[data-theme="dark"] .task-pin-btn {
+  color: #64748b;
+}
+
+html[data-theme="dark"] .task-pin-btn:hover {
+  background: rgba(129, 140, 248, 0.15);
+  color: #a5b4fc;
+}
+
+html[data-theme="dark"] .footer {
+  border-top-color: rgba(148, 163, 184, 0.14);
+}
+
+html[data-theme="dark"] .clear-done-btn {
+  color: #94a3b8;
+}
+
+html[data-theme="dark"] .clear-done-btn:hover {
+  background: rgba(129, 140, 248, 0.15);
+  color: #a5b4fc;
+}
+
+html[data-theme="dark"] .boot-status {
+  color: #cbd5e1;
+}
+
+html[data-theme="dark"] .boot-progress-track {
+  background: rgba(129, 140, 248, 0.18);
+}
+
+html[data-theme="dark"] .task-checkbox {
+  border-color: #64748b;
+  background: #0f172a;
+}
+
+html[data-theme="dark"] .tag-chip[data-tag="work"] {
+  background: rgba(59, 130, 246, 0.2);
+}
+
+html[data-theme="dark"] .tag-chip[data-tag="life"] {
+  background: rgba(16, 185, 129, 0.2);
+}
+
+html[data-theme="dark"] .tag-chip[data-tag="shopping"] {
+  background: rgba(245, 158, 11, 0.2);
 }
