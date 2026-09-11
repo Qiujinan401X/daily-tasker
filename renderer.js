@@ -7,6 +7,8 @@
   const TAG_ORDER_KEY = 'desktop_todo_tag_order_v1';
   const SETTINGS_KEY = 'desktop_todo_settings_v1';
   const EXPIRE_DAYS = 7;
+  const EXTEND_DAYS = 1;
+  const MAX_DURATION_DAYS = 365;
   const ONE_DAY_MS = 24 * 60 * 60 * 1000;
   const LONG_PRESS_MS = 420;
   const DRAG_MOVE_CANCEL_PX = 8;
@@ -77,11 +79,23 @@
     return `${d.getMonth() + 1}月${d.getDate()}日 · ${weekDays[d.getDay()]}`;
   }
 
-  function getExpireInfo(createdAt) {
+  function normalizeDurationDays(value) {
+    const n = Number(value);
+    if (!Number.isFinite(n) || n < 1) return EXPIRE_DAYS;
+    return Math.min(MAX_DURATION_DAYS, Math.max(1, Math.floor(n)));
+  }
+
+  function getTaskDurationDays(task) {
+    return normalizeDurationDays(task && task.durationDays);
+  }
+
+  function getExpireInfo(task) {
+    const createdAt = task.createdAt;
+    const durationDays = getTaskDurationDays(task);
     const now = Date.now();
-    const remainMs = createdAt + EXPIRE_DAYS * ONE_DAY_MS - now;
+    const remainMs = createdAt + durationDays * ONE_DAY_MS - now;
     const remainDays = remainMs / ONE_DAY_MS;
-    let label = '7天内有效';
+    let label = `${durationDays}天内有效`;
     let cls = '';
     if (remainDays <= 1) {
       label = '即将过期';
@@ -92,7 +106,13 @@
     } else {
       label = `还剩 ${Math.ceil(remainDays)} 天`;
     }
-    return { label, cls, expired: remainMs <= 0 };
+    return {
+      label,
+      cls,
+      expired: remainMs <= 0,
+      durationDays,
+      canExtend: durationDays < MAX_DURATION_DAYS
+    };
   }
 
   function normalizeTag(tag) {
@@ -162,7 +182,8 @@
       return arr.map((t) => ({
         ...t,
         tag: normalizeTag(t.tag),
-        pinned: !!t.pinned
+        pinned: !!t.pinned,
+        durationDays: normalizeDurationDays(t.durationDays)
       }));
     } catch (e) {
       console.error('读取任务失败', e);
@@ -235,11 +256,11 @@
     }
   }
 
-  /** 清理过期任务（超过 7 天） */
+  /** 清理过期任务（按各自 durationDays） */
   function cleanupExpired() {
     const now = Date.now();
     const before = tasks.length;
-    tasks = tasks.filter((t) => now - t.createdAt < EXPIRE_DAYS * ONE_DAY_MS);
+    tasks = tasks.filter((t) => now - t.createdAt < getTaskDurationDays(t) * ONE_DAY_MS);
     if (tasks.length !== before) {
       saveTasks();
     }
@@ -472,8 +493,12 @@
       (task.pinned ? ' pinned' : '');
     li.dataset.id = task.id;
 
-    const expire = getExpireInfo(task.createdAt);
+    const expire = getExpireInfo(task);
     const tagId = normalizeTag(task.tag);
+    const extendDisabled = !expire.canExtend;
+    const extendTitle = extendDisabled
+      ? `最长 ${MAX_DURATION_DAYS} 天`
+      : `延长 ${EXTEND_DAYS} 天（当前有效期 ${expire.durationDays} 天）`;
 
     li.innerHTML = `
       <label class="checkbox-wrapper">
@@ -497,7 +522,10 @@
             </svg>
             ${formatTime(task.createdAt)}
           </span>
-          <span class="expire-tag ${expire.cls}">${expire.label}</span>
+          <span class="expire-actions">
+            <span class="expire-tag ${expire.cls}" title="有效期 ${expire.durationDays} 天">${expire.label}</span>
+            <button type="button" class="extend-btn" title="${escapeHtml(extendTitle)}" ${extendDisabled ? 'disabled' : ''}>+${EXTEND_DAYS}天</button>
+          </span>
         </div>
       </div>
       ${
@@ -524,6 +552,15 @@
       pinTaskBtn.addEventListener('dblclick', (e) => e.stopPropagation());
     }
 
+    const extendBtn = li.querySelector('.extend-btn');
+    if (extendBtn) {
+      extendBtn.addEventListener('click', (e) => {
+        e.stopPropagation();
+        extendTaskDuration(task.id, EXTEND_DAYS);
+      });
+      extendBtn.addEventListener('dblclick', (e) => e.stopPropagation());
+    }
+
     const tagBtn = li.querySelector('.task-tag-btn');
     const picker = li.querySelector('.task-tag-picker');
     tagBtn.addEventListener('click', (e) => {
@@ -536,7 +573,8 @@
       if (
         e.target.closest('.checkbox-wrapper') ||
         e.target.closest('.task-pin-btn') ||
-        e.target.closest('.task-tag-picker')
+        e.target.closest('.task-tag-picker') ||
+        e.target.closest('.extend-btn')
       ) {
         return;
       }
@@ -678,6 +716,7 @@
         completed: false,
         pinned: false,
         tag: draftTag,
+        durationDays: EXPIRE_DAYS,
         createdAt: now - i
       };
       tasks.unshift(task);
@@ -685,6 +724,38 @@
     saveTasks();
     render();
     return lines.length;
+  }
+
+  function updateTaskExpireUi(id) {
+    const task = tasks.find((t) => t.id === id);
+    if (!task) return;
+    const li = taskList.querySelector(`.task-item[data-id="${id}"]`);
+    if (!li) return;
+
+    const expire = getExpireInfo(task);
+    const tagEl = li.querySelector('.expire-tag');
+    const extendBtn = li.querySelector('.extend-btn');
+    if (!tagEl || !extendBtn) return;
+
+    tagEl.className = 'expire-tag' + (expire.cls ? ` ${expire.cls}` : '');
+    tagEl.title = `有效期 ${expire.durationDays} 天`;
+    tagEl.textContent = expire.label;
+
+    extendBtn.disabled = !expire.canExtend;
+    extendBtn.title = expire.canExtend
+      ? `延长 ${EXTEND_DAYS} 天（当前有效期 ${expire.durationDays} 天）`
+      : `最长 ${MAX_DURATION_DAYS} 天`;
+  }
+
+  function extendTaskDuration(id, days) {
+    const task = tasks.find((t) => t.id === id);
+    if (!task) return;
+    const add = Math.max(1, Math.floor(Number(days) || EXTEND_DAYS));
+    const current = getTaskDurationDays(task);
+    if (current >= MAX_DURATION_DAYS) return;
+    task.durationDays = normalizeDurationDays(current + add);
+    saveTasks();
+    updateTaskExpireUi(id);
   }
 
   function togglePinTask(id) {

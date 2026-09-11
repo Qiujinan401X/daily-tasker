@@ -754,6 +754,37 @@ input, textarea {
   color: #dc2626;
 }
 
+.expire-actions {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+}
+
+.extend-btn {
+  appearance: none;
+  border: none;
+  border-radius: 8px;
+  padding: 1px 6px;
+  font-size: 10px;
+  font-weight: 600;
+  font-family: inherit;
+  cursor: pointer;
+  line-height: 1.4;
+  color: #6366f1;
+  background: rgba(99, 102, 241, 0.1);
+  transition: all 0.15s ease;
+}
+
+.extend-btn:hover:not(:disabled) {
+  background: rgba(99, 102, 241, 0.18);
+  color: #4f46e5;
+}
+
+.extend-btn:disabled {
+  opacity: 0.45;
+  cursor: not-allowed;
+}
+
 /* 任务置顶按钮 */
 .task-pin-btn {
   opacity: 0;
@@ -1169,6 +1200,31 @@ html[data-theme="dark"] .task-edit-input {
 html[data-theme="dark"] .task-tag-btn {
   background: rgba(148, 163, 184, 0.14);
   color: #94a3b8;
+}
+
+html[data-theme="dark"] .extend-btn {
+  color: #a5b4fc;
+  background: rgba(129, 140, 248, 0.16);
+}
+
+html[data-theme="dark"] .extend-btn:hover:not(:disabled) {
+  background: rgba(129, 140, 248, 0.28);
+  color: #c7d2fe;
+}
+
+html[data-theme="dark"] .expire-tag {
+  background: rgba(34, 197, 94, 0.16);
+  color: #4ade80;
+}
+
+html[data-theme="dark"] .expire-tag.near {
+  background: rgba(245, 158, 11, 0.16);
+  color: #fbbf24;
+}
+
+html[data-theme="dark"] .expire-tag.expiring {
+  background: rgba(239, 68, 68, 0.16);
+  color: #f87171;
 }
 
 html[data-theme="dark"] .task-tag-menu {
